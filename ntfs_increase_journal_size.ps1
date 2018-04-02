@@ -1,11 +1,11 @@
-# Increase NTFS USN journal size
+# Powershell script to increase NTFS USN journal size so that it can easily be ran via GPO
 # Author: London Crosby v0.5
 
 # Set volume. Default is C:
 $Volume = C:
 
 #Set as MB. Default is 32MB.
-$DesiredSize = 1000
+$DesiredSize = 32
 
 # Maths needed for conversion
 $DesiredSizeInBytes = $DesiredSize * 1024 * 1024
