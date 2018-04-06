@@ -1,5 +1,14 @@
-# Powershell script to increase NTFS USN journal size so that it can easily be ran via GPO
-# Author: London Crosby v0.5
+<#
+.SYNOPSIS
+
+Powershell script to increase NTFS USN journal size so that it can easily be ran via GPO
+
+.NOTES
+
+   Author: London Crosby
+   Created: <04-02-2018>
+
+#>
 
 # Set volume. Default is C:
 $Volume = C:
