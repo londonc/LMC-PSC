@@ -6,7 +6,7 @@ Powershell script to parse through Office 365 logs every 15 minutes and sent out
    Created: <05-14-2018>
 #>
 
-#
+# 
 $ExoLogin = 'no-reply@example.com'
 $ExoPassFile = 'Path-to-encryped-password.txt'
 
@@ -15,15 +15,15 @@ If (!(Test-Path $ExoPassFile)) {
     $GetPass = Read-Host -Prompt "Enter password:" -AsSecureString
     $GetPass | ConvertFrom-SecureString | Out-File $ExoPassFile 
 }
-#
+# 
 $ExoCredentials = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $ExoLogin, (Get-Content $ExoPassFile | ConvertTo-SecureString)
 
 $ExoSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://ps.outlook.com/PowerShell/ -Credential $ExoCredentials -Authentication Basic -AllowRedirection
 
 Import-PSSession $ExoSession
 # For future functionality
-#Import-Module MsOnline
-#Connect-MsolService -Credential $ExoCredentials
+Import-Module MsOnline
+Connect-MsolService -Credential $ExoCredentials
 
 # Set basic Alerting variables
 $AlertTo = 'your_address@example.com'
@@ -41,6 +41,8 @@ foreach ($l in $AuditLog){
     $aData = $l.AuditData | ConvertFrom-Json
     $aTime = $aData.CreationTime
     $aUserId = $aData.UserId
+    $aUserDetails = Get-MsolUser -UserPrincipalName $aUserId
+    $aUserName = $aUserDetails.DisplayName
     $aParams = $aData.Parameters
     #
     if ($aParams -match 'SubjectOrBodyContainsWords'){
@@ -50,7 +52,7 @@ foreach ($l in $AuditLog){
 
                 $AlertSubject = "$AlertWhat - $aUserId!"
                 # Using HTML so it can be expanded on in the future with pretty colors for idiots
-                $AlertBody = "<h3>$aTime - $aUserId </h3><p>Created new rule that contains: $elementValue</p><p style=font-weight:bold;>INVESTIGATE ASAP!!!</p>"
+                $AlertBody = "<h3>$aTime - $aUserId ($aUserName)</h3><p>Created new rule that contains: $elementValue</p></br><p style=font-weight:bold;>INVESTIGATE ASAP!!!</p>"
 
                 Send-MailMessage -From $ExoLogin -To $AlertTo -Subject $AlertSubject -BodyAsHtml $AlertBody -SmtpServer $AlertSMTP
             }
