@@ -40,6 +40,7 @@ foreach ($l in $AuditLog){
     $aData = $l.AuditData | ConvertFrom-Json
     $aTime = $aData.CreationTime
     $aUserId = $aData.UserId
+    $aUserIp = $aData.ClientIP
     # Get user details - can be used for future expansion like blocking sign ins
     $aUserDetails = Get-MsolUser -UserPrincipalName $aUserId
     $aUserName = $aUserDetails.DisplayName
@@ -52,7 +53,7 @@ foreach ($l in $AuditLog){
 
                 $AlertSubject = "$AlertWhat - $aUserId!"
                 # Using HTML so it can be expanded on in the future with pretty colors for idiots
-                $AlertBody = "<h3>$aTime - $aUserId ($aUserName)</h3><p>Created new rule that contains: $elementValue</p></br><p style=font-weight:bold;>INVESTIGATE ASAP!!!</p>"
+                $AlertBody = "<h3>$aTime - $aUserId ($aUserName) from  $aUserIp</h3><p>Created a new inbox rule that contains: $elementValue</p></br><p style=font-weight:bold;>INVESTIGATE ASAP!!!</p>"
 
                 Send-MailMessage -From $ExoLogin -To $AlertTo -Subject $AlertSubject -BodyAsHtml $AlertBody -SmtpServer $AlertSMTP
             }
