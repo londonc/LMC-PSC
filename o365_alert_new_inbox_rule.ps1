@@ -21,7 +21,6 @@ $ExoCredentials = New-Object -TypeName System.Management.Automation.PSCredential
 $ExoSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://ps.outlook.com/PowerShell/ -Credential $ExoCredentials -Authentication Basic -AllowRedirection
 
 Import-PSSession $ExoSession
-# For future functionality
 Import-Module MsOnline
 Connect-MsolService -Credential $ExoCredentials
 
@@ -41,6 +40,7 @@ foreach ($l in $AuditLog){
     $aData = $l.AuditData | ConvertFrom-Json
     $aTime = $aData.CreationTime
     $aUserId = $aData.UserId
+    # Get user details - can be used for future expansion like blocking sign ins
     $aUserDetails = Get-MsolUser -UserPrincipalName $aUserId
     $aUserName = $aUserDetails.DisplayName
     $aParams = $aData.Parameters
