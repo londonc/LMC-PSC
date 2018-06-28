@@ -8,3 +8,8 @@ Collection of useful Powershell scripts
 - o365_alert_new_inbox_rule.ps1
 
   Script to be ran every 15 minutes that monitors new Inbox rules that get created in Office 365 that look suspicious. 
+  
+  
+- o365_seek_n_destroy.ps1
+
+  Parse through Office 365 Compliance Center for specific emails and delete them.
