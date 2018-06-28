@@ -21,7 +21,8 @@ While (!$SearchParamSubject){
 #
 If ($SearchParamSubject.Contains("!")){
     Write-Output "WARNING: Contains special character that may present a problem... removing from string"
-    $SearchParamSubject = $SearchParamSubject -replace '!',''
+    # '!' character can cause problems. Probably ASCII/Unicode handling issue. 
+    $SearchParamSubject = $SearchParamSubject -replace '!','*'
 }
 
 # Narrow the scope a bit
@@ -43,7 +44,7 @@ $EOCredentials = New-Object -TypeName System.Management.Automation.PSCredential 
 $EOCCSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ -Credential $EOCredentials -Authentication Basic -AllowRedirection
 
 Import-PSSession $EOCCSession
-New-ComplianceSearch -Name "$SearchName" -ContentMatchQuery "(c:c)(subjecttitle:`"$SearchParamSubject`")(from:$SearchParamFrom)(sent>$SearchParamDate)‎" -Description "Initiated from $env:COMPUTERNAME" -ExchangeLocation All -AllowNotFoundExchangeLocationsEnabled $true
+New-ComplianceSearch -Name "$SearchName" -ContentMatchQuery "(c:c)(subjecttitle:$SearchParamSubject)(from:$SearchParamFrom)(sent>$SearchParamDate)‎" -Description "Initiated from $env:COMPUTERNAME" -ExchangeLocation All -AllowNotFoundExchangeLocationsEnabled $true
 
 Start-ComplianceSearch -Identity "$SearchName"
 
@@ -64,6 +65,7 @@ If($SearchProgress.Items -gt 0){
         Start-Sleep -s 1
         $PurgeProgress = Get-ComplianceSearchAction -Identity $SearchName"_purge"
     }
+    Write-Out "$SearchProgress.Items deleted"
 
 } else {
     Write-Output "ERROR: No items found! Check your search parameters. "
