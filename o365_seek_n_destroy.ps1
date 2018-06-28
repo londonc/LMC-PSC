@@ -28,12 +28,10 @@ If ($SearchParamSubject.Contains("!")){
 # Narrow the scope a bit with some guard rails
 $SearchParamDate = ""
 While (($SearchParamDate.Length -lt 10) -or ($SearchParamDate.Length -gt 10)){
-    $SearchParamDate = Read-Host -Prompt 'Sent after YYYY-MM-DD (Default 1 Month)'
+    $SearchParamDate = Read-Host -Prompt 'Sent after (Format must be YYYY-MM-DD - Default 1 Month)'
 
     If ($SearchParamDate.Length -eq 0) { 
         $SearchParamDate = $CurrentDate.AddMonths(-1).ToString('yyy-MM-dd')
-    } else { 
-        Write-Output 'ERROR: Date format incorrect. Must be in YYYY-MM-DD format, or leave blank for default. '
     }
 }
 
@@ -86,7 +84,7 @@ If($SearchProgress.Items -gt 0){
                 Start-Sleep -s 1
                 $PurgeProgress = Get-ComplianceSearchAction -Identity $SearchName"_purge"
             }
-            Write-Out "$SearchProgress.Items deleted"
+            Write-Output "$SearchProgress.Items deleted"
 
         } else {
             Write-Output "ERROR: User may have selected not to purge or something went wrong. See output for debugging. "
