@@ -53,6 +53,7 @@ New-ComplianceSearch -Name "$SearchName" -ContentMatchQuery "(c:c)(subjecttitle:
 function EOL {
     Write-Output '### END OF LINE ###'
     Remove-PSSession $EOCCSession
+    Exit
 }
 
 Start-ComplianceSearch -Identity "$SearchName";
