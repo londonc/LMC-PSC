@@ -19,19 +19,14 @@ While (!$SearchParamSubject){
     $SearchParamSubject = Read-Host -Prompt 'Subject Line'  
 }
 
-# Seen cases where '!' causes a problem
-If ($SearchParamSubject.Contains("!")){
-    Write-Output 'WARNING: Contains special character that may present a problem... replacing with wildcard'
-    $SearchParamSubject = $SearchParamSubject -replace '!','*'
-}
 
-# Narrow the scope a bit with some guard rails
+# Narrow the scope a bit with some guard rails. Need to replace with regex
 $SearchParamDate = ""
 While (($SearchParamDate.Length -lt 10) -or ($SearchParamDate.Length -gt 10)){
     $SearchParamDate = Read-Host -Prompt 'Sent after (Format must be YYYY-MM-DD - Default 1 Month)'
 
     If ($SearchParamDate.Length -eq 0) { 
-        $SearchParamDate = $CurrentDate.AddMonths(-1).ToString('yyy-MM-dd')
+        $SearchParamDate = $CurrentDate.AddMonths(-1).ToString('yyyy-MM-dd')
     }
 }
 
@@ -40,7 +35,7 @@ $EOPassFile = 'Path-to-encryped-password.txt'
 
 # If doesn't exist then let's set some up!
 If (!(Test-Path $EOPassFile)) { 
-    $GetPass = Read-Host -Prompt "Enter password: " -AsSecureString
+    $GetPass = Read-Host -Prompt 'Enter password: ' -AsSecureString
     $GetPass | ConvertFrom-SecureString | Out-File $EOPassFile 
 }
 
@@ -48,7 +43,6 @@ $EOCredentials = New-Object -TypeName System.Management.Automation.PSCredential 
 $EOCCSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://ps.compliance.protection.outlook.com/powershell-liveid/ -Credential $EOCredentials -Authentication Basic -AllowRedirection
 
 Import-PSSession $EOCCSession
-New-ComplianceSearch -Name "$SearchName" -ContentMatchQuery "(c:c)(subjecttitle:$SearchParamSubject)(from:$SearchParamFrom)(sent>$SearchParamDate)‎" -Description "Initiated from $env:COMPUTERNAME" -ExchangeLocation All -AllowNotFoundExchangeLocationsEnabled $true
 
 function EOL {
     Write-Output '### END OF LINE ###'
@@ -56,14 +50,25 @@ function EOL {
     Exit
 }
 
-Start-ComplianceSearch -Identity "$SearchName";
+
+$SearchQuery = "(c:c)(subjecttitle:$SearchParamSubject)(from:$SearchParamFrom)(sent>$SearchParamDate)‎"
+# Seen powershell do funny shit with hidden characters
+$SearchQuery = $SearchQuery -replace '[^\w\(\)\:\@\.\>\-/ ]',''
+
+
+New-ComplianceSearch -Name $SearchName -ContentMatchQuery $SearchQuery -Description "Initiated from $env:COMPUTERNAME" -ExchangeLocation All -AllowNotFoundExchangeLocationsEnabled $true
+
+
+Write-Output '### STARTING SEARCH ###'
+Start-ComplianceSearch -Identity $SearchName;
 
 # Be nice and wait for search to complete 
 Write-Output '### WAITING FOR SEARCH TO COMPLETE... ###'
-$SearchProgress = Get-ComplianceSearch -Identity "$SearchName" | Select Items, Status
+$SearchProgress = Get-ComplianceSearch -Identity $SearchName | Select Items, Status
+
 While ($SearchProgress.Status -ne 'Completed'){
     Start-Sleep -s 1
-    $SearchProgress = Get-ComplianceSearch -Identity "$SearchName" | Select Items, Status
+    $SearchProgress = Get-ComplianceSearch -Identity $SearchName | Select Items, Status
 }
 
 Write-Output '### SEARCH COMPLETE ###'
@@ -74,7 +79,7 @@ $ErrorCount = $Error.Count
 
 If($SearchProgress.Items -gt 0){
     Write-Output "### ITEMS FOUND. STARTING PURGE... ###"
-    New-ComplianceSearchAction -SearchName "$SearchName" -Purge -PurgeType SoftDelete -Verbose
+    New-ComplianceSearchAction -SearchName $SearchName -Purge -PurgeType SoftDelete -Verbose
 
         $PurgeProgress = Get-ComplianceSearchAction -Identity $SearchName"_purge"
 
@@ -88,12 +93,12 @@ If($SearchProgress.Items -gt 0){
             Write-Output "$SearchProgress.Items deleted"
 
         } else {
-            Write-Output "ERROR: User may have selected not to purge or something went wrong. See output for debugging. "
+            Write-Output 'ERROR: User may have selected not to purge or something went wrong. See output for debugging. '
             EOL
         }
 
 } else {
-    Write-Output "ERROR: No items found! Check your search parameters. "
+    Write-Output 'ERROR: No items found! Check your search parameters. '
 }
 
 EOL
