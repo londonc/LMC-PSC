@@ -99,7 +99,7 @@ If($SearchProgress.Items -gt 0){
         }
 
 } else {
-    Write-Output 'ERROR: No items found! Check your search parameters. '
+    Write-Output 'ERROR: 0 items found! Check your search parameters. '
 }
 
 EOL
