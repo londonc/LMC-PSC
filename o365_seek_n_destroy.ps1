@@ -71,6 +71,7 @@ While ($SearchProgress.Status -ne 'Completed'){
     $SearchProgress = Get-ComplianceSearch -Identity $SearchName | Select Items, Status
 }
 
+$SearchFound = $SearchProgress.Items
 Write-Output '### SEARCH COMPLETE ###'
 
 
@@ -78,7 +79,7 @@ Write-Output '### SEARCH COMPLETE ###'
 $ErrorCount = $Error.Count
 
 If($SearchProgress.Items -gt 0){
-    Write-Output "### ITEMS FOUND. STARTING PURGE... ###"
+    Write-Output "### $SearchFound ITEMS FOUND. STARTING PURGE... ###"
     New-ComplianceSearchAction -SearchName $SearchName -Purge -PurgeType SoftDelete -Verbose
 
         $PurgeProgress = Get-ComplianceSearchAction -Identity $SearchName"_purge"
@@ -90,7 +91,7 @@ If($SearchProgress.Items -gt 0){
                 Start-Sleep -s 1
                 $PurgeProgress = Get-ComplianceSearchAction -Identity $SearchName"_purge"
             }
-            Write-Output "$SearchProgress.Items deleted"
+            Write-Output "$SearchFound itmes deleted."
 
         } else {
             Write-Output 'ERROR: User may have selected not to purge or something went wrong. See output for debugging. '
