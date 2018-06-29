@@ -51,9 +51,9 @@ function EOL {
 }
 
 
-$SearchQuery = "(c:c)(subjecttitle:$SearchParamSubject)(from:$SearchParamFrom)(sent>$SearchParamDate)‎"
+$SearchQuery = "(c:c)(subjecttitle:`"$SearchParamSubject`")(from:$SearchParamFrom)(sent>$SearchParamDate)‎"
 # Seen powershell do funny shit with hidden characters
-$SearchQuery = $SearchQuery -replace '[^\w\(\)\:\@\.\>\-/ ]',''
+$SearchQuery = $SearchQuery -replace '[^\w\(\)\:\@\.\>\-\ \!\"]',''
 
 
 New-ComplianceSearch -Name $SearchName -ContentMatchQuery $SearchQuery -Description "Initiated from $env:COMPUTERNAME" -ExchangeLocation All -AllowNotFoundExchangeLocationsEnabled $true
