@@ -91,7 +91,7 @@ If($SearchProgress.Items -gt 0){
                 Start-Sleep -s 1
                 $PurgeProgress = Get-ComplianceSearchAction -Identity $SearchName"_purge"
             }
-            Write-Output "$SearchFound itmes deleted."
+            Write-Output "$SearchFound items deleted."
 
         } else {
             Write-Output 'ERROR: User may have selected not to purge or something went wrong. See output for debugging. '
