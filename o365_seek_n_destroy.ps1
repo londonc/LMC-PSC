@@ -8,32 +8,38 @@ Powershell script to search through Office 365 Compliance Center and delete emai
 $CurrentDate = Get-Date
 $SearchDate = $CurrentDate.ToString()
 
+Function Get-Query {
+    [cmdletbinding(SupportsShouldProcess)]
+    Param()
 
-Write-Output '### SEARCH AND REMOVE EMAILS MATCHING THE FOLLOWING CRITERIA ###'
+    Write-Output '### SEARCH AND REMOVE EMAILS MATCHING THE FOLLOWING CRITERIA ###'
+    $SearchParamFrom = Read-Host -Prompt 'From'
+    #$SearchParamFrom = $SearchParamFrom -replace '[^\w\(\)\@\.\>\-\ \"\'']',''
 
-$SearchParamFrom = Read-Host -Prompt 'From'
-#$SearchParamFrom = $SearchParamFrom -replace '[^\w\(\)\:\@\.\>\-\ \"\'']',''
+    $SearchName = "$SearchParamFrom - $SearchDate"
 
-$SearchName = "$SearchParamFrom - $SearchDate"
+    # Prevent user from accidentially entering nothing. 
+    $SearchParamSubject = ''
+    While (!$SearchParamSubject){
+        $SearchParamSubject = Read-Host -Prompt 'Subject Line'  
+    }
 
-# Prevent user from accidentially entering nothing. 
-$SearchParamSubject = ''
-While (!$SearchParamSubject){
-    $SearchParamSubject = Read-Host -Prompt 'Subject Line'  
-}
+    # Narrow the scope a bit with some guard rails.
+    $SearchParamDate = ''
+    While ($SearchParamDate -notmatch '\d\d\d\d\-\d\d\-\d\d' ){
+        $SearchDefaultDate = $CurrentDate.AddMonths(-1).ToString('yyyy-MM-dd')
+        $SearchParamDate = Read-Host -Prompt "Sent after YYYY-MM-DD (Default is $SearchDefaultDate)"
 
-# Narrow the scope a bit with some guard rails.
-$SearchParamDate = ''
-While ($SearchParamDate -notmatch '\d\d\d\d\-\d\d\-\d\d' ){
-    $SearchDefaultDate = $CurrentDate.AddMonths(-1).ToString('yyyy-MM-dd')
-    $SearchParamDate = Read-Host -Prompt "Sent after YYYY-MM-DD (Default is $SearchDefaultDate)"
-
-    If ($SearchParamDate.Length -eq 0) { 
-        $SearchParamDate = $SearchDefaultDate
+        If ($SearchParamDate.Length -eq 0) { 
+            $SearchParamDate = $SearchDefaultDate
+        }
     }
 }
 
-$EOLogin = 'admin@example.com'
+
+Get-Query
+
+EOLogin = 'admin@example.com'
 $EOPassFile = 'C:\Path\to\encryped\password.txt'
 
 # If doesn't exist then let's set some up!
@@ -114,6 +120,7 @@ If($SearchProgress.Items -gt 0){
 
 } else {
     Write-Output 'ERROR: 0 items found! Check your search parameters. '
+    Get-Query
 }
 
 EOL
