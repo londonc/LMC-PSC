@@ -10,28 +10,31 @@ $SearchDate = $CurrentDate.ToString()
 
 
 Write-Output '### SEARCH AND REMOVE EMAILS MATCHING THE FOLLOWING CRITERIA ###'
+
 $SearchParamFrom = Read-Host -Prompt 'From'
+#$SearchParamFrom = $SearchParamFrom -replace '[^\w\(\)\:\@\.\>\-\ \"\'']',''
+
 $SearchName = "$SearchParamFrom - $SearchDate"
 
-# Prevent user from accidentially entering in nothing. 
-$SearchParamSubject = ""
+# Prevent user from accidentially entering nothing. 
+$SearchParamSubject = ''
 While (!$SearchParamSubject){
     $SearchParamSubject = Read-Host -Prompt 'Subject Line'  
 }
 
-
-# Narrow the scope a bit with some guard rails. Need to replace with regex
-$SearchParamDate = ""
-While (($SearchParamDate.Length -lt 10) -or ($SearchParamDate.Length -gt 10)){
-    $SearchParamDate = Read-Host -Prompt 'Sent after (Format must be YYYY-MM-DD - Default 1 Month)'
+# Narrow the scope a bit with some guard rails.
+$SearchParamDate = ''
+While ($SearchParamDate -notmatch '\d\d\d\d\-\d\d\-\d\d' ){
+    $SearchDefaultDate = $CurrentDate.AddMonths(-1).ToString('yyyy-MM-dd')
+    $SearchParamDate = Read-Host -Prompt "Sent after YYYY-MM-DD (Default is $SearchDefaultDate)"
 
     If ($SearchParamDate.Length -eq 0) { 
-        $SearchParamDate = $CurrentDate.AddMonths(-1).ToString('yyyy-MM-dd')
+        $SearchParamDate = $SearchDefaultDate
     }
 }
 
 $EOLogin = 'admin@example.com'
-$EOPassFile = 'Path-to-encryped-password.txt'
+$EOPassFile = 'C:\Path\to\encryped\password.txt'
 
 # If doesn't exist then let's set some up!
 If (!(Test-Path $EOPassFile)) { 
@@ -44,6 +47,38 @@ $EOCCSession = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUr
 
 Import-PSSession $EOCCSession
 
+Function Purge {
+    [cmdletbinding(SupportsShouldProcess)]
+    Param()
+    
+    If ($PSCmdlet.ShouldContinue("$SearchFound items found. Do you wish to purge them?","Staring Purge")) {
+
+        # Get error count for preventing rolling errors
+        $ErrorCount = $Error.Count
+
+        New-ComplianceSearchAction -SearchName $SearchName -Purge -PurgeType SoftDelete -Verbose
+
+        $PurgeProgress = Get-ComplianceSearchAction -Identity $SearchName"_purge"
+        
+        If($ErrorCount -eq $Error.Count){
+             While($PurgeProgress.Status -ne 'Completed'){
+                   Write-Output '### WAITING FOR PURGE TO COMPLETE... ###'
+                    Start-Sleep -s 1
+                    $PurgeProgress = Get-ComplianceSearchAction -Identity $SearchName"_purge"
+             }
+
+         Write-Output "$SearchFound items deleted."
+
+        } else {
+            Write-Output 'ERROR: Something went wrong. See output for debugging. '
+            EOL
+        }
+        
+    } else {
+        Write-Output "You're the boss. "
+    }
+}
+
 function EOL {
     Write-Output '### END OF LINE ###'
     Remove-PSSession $EOCCSession
@@ -53,7 +88,7 @@ function EOL {
 
 $SearchQuery = "(c:c)(subjecttitle:`"$SearchParamSubject`")(from:$SearchParamFrom)(sent>$SearchParamDate)‎"
 # Seen powershell do funny shit with hidden characters
-$SearchQuery = $SearchQuery -replace '[^\w\(\)\:\@\.\>\-\ \!\"]',''
+$SearchQuery = $SearchQuery -replace '[^\w\(\)\:\@\.\>\-\ \!\"\'']',''
 
 
 New-ComplianceSearch -Name $SearchName -ContentMatchQuery $SearchQuery -Description "Initiated from $env:COMPUTERNAME" -ExchangeLocation All -AllowNotFoundExchangeLocationsEnabled $true
@@ -74,29 +109,8 @@ While ($SearchProgress.Status -ne 'Completed'){
 $SearchFound = $SearchProgress.Items
 Write-Output '### SEARCH COMPLETE ###'
 
-
-# Get error count for preventing rolling errors
-$ErrorCount = $Error.Count
-
 If($SearchProgress.Items -gt 0){
-    Write-Output "### $SearchFound ITEMS FOUND. STARTING PURGE... ###"
-    New-ComplianceSearchAction -SearchName $SearchName -Purge -PurgeType SoftDelete -Verbose
-
-        $PurgeProgress = Get-ComplianceSearchAction -Identity $SearchName"_purge"
-
-        
-        If($ErrorCount -eq $Error.Count){
-            While($PurgeProgress.Status -ne 'Completed'){
-               Write-Output '### WAITING FOR PURGE TO COMPLETE... ###'
-                Start-Sleep -s 1
-                $PurgeProgress = Get-ComplianceSearchAction -Identity $SearchName"_purge"
-            }
-            Write-Output "$SearchFound items deleted."
-
-        } else {
-            Write-Output 'ERROR: User may have selected not to purge or something went wrong. See output for debugging. '
-            EOL
-        }
+    Purge
 
 } else {
     Write-Output 'ERROR: 0 items found! Check your search parameters. '
