@@ -56,14 +56,14 @@ foreach ($l in $AuditLog){
     $aUserName = $aUserDetails.DisplayName
     $aParams = $aData.Parameters
     #
-    if ($aParams.Name -match 'SubjectOrBodyContainsWords' -Or $aParams.Name -match 'FromAddressContainsWords'){
+    if ($aParams.Name -match 'SubjectOrBodyContainsWords' -Or $aParams.Name -match 'FromAddressContainsWords' -Or $aParams.Name -match 'MyNameInToOrCcBox'){
         foreach ($element in $aParams) {
         $elementValue = $element.Value
             if ($elementValue.Contains($BlacklistContains) -Or $elementValue.Contains($BlacklistFromAddress)){
+                Write-Output "Found match!"
                 SendAlert
             }
         }
-    }
 } 
 
 Remove-PSSession $ExoSession
