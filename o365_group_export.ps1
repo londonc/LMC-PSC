@@ -1,3 +1,11 @@
+<#
+.SYNOPSIS
+Powershell script to export all distribution groups and user memberships to a nice CSV for HR!
+   Author: London Crosby
+   Created: <09-26-2018>
+#>
+
+
 $O365Creds = Get-Credential
 
 $Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://ps.outlook.com/Powershell -Credential $O365Creds -AllowRedirection -Authentication basic
