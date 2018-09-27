@@ -5,7 +5,6 @@ Powershell script to export all distribution groups and user memberships to a ni
    Created: <09-26-2018>
 #>
 
-
 $O365Creds = Get-Credential
 
 $Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://ps.outlook.com/Powershell -Credential $O365Creds -AllowRedirection -Authentication basic
@@ -38,7 +37,10 @@ ForEach ($User in $Users) {
     
     # Make object to hold each row of data to be exported
     $ObjRow = New-Object PSObject
-    $ObjRow | Add-Member -MemberType NoteProperty -Name "Username" -Value $UserEmail
+    $ObjRow | Add-Member -MemberType NoteProperty -Name "SMTP" -Value $UserEmail
+    $ObjRow | Add-Member -MemberType NoteProperty -Name "DisplayName" -Value $($User.DisplayName)
+    $ObjRow | Add-Member -MemberType NoteProperty -Name "RecipientType" -Value $($User.RecipientType)
+
 
     # Query each group for it's members
     ForEach ($Group in $GroupColumn) {
