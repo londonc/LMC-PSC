@@ -13,6 +13,10 @@ Collection of useful Powershell scripts
 
   Script to be ran every 15 minutes that monitors new Inbox rules that get created in Office 365 that look suspicious. 
   
+- o365_group_export.ps1
+
+  Script to export distribution groups and members in a nice big ol' CSV for HR departments. =D
+
   
 - o365_seek_n_destroy.ps1
 
